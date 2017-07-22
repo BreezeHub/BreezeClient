@@ -5,8 +5,8 @@ using Microsoft.Extensions.Logging;
 using NBitcoin;
 using NTumbleBit.ClassicTumbler;
 using Stratis.Bitcoin;
-using Stratis.Bitcoin.Wallet;
-using Stratis.Bitcoin.WatchOnlyWallet;
+using Stratis.Bitcoin.Features.Wallet;
+using Stratis.Bitcoin.Features.WatchOnlyWallet;
 
 namespace Breeze.TumbleBit.Client
 {
