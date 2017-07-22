@@ -11,6 +11,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NBitcoin", "BreezeCommon\Br
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HashLib", "BreezeCommon\BreezeProtocol\NStratis\Hashing\HashLib\HashLib.csproj", "{22B7B152-5E4E-472B-9D26-AEEDF70856EA}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stratis.Bitcoin", "StratisBitcoinFullNode\Stratis.Bitcoin\Stratis.Bitcoin.csproj", "{389912AE-40DB-483F-A3D0-59A87606E414}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stratis.Bitcoin.Common", "StratisBitcoinFullNode\Stratis.Bitcoin.Common\Stratis.Bitcoin.Common.csproj", "{F50809B5-10EC-4B70-B343-44958CE142E6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +37,14 @@ Global
 		{22B7B152-5E4E-472B-9D26-AEEDF70856EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{22B7B152-5E4E-472B-9D26-AEEDF70856EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{22B7B152-5E4E-472B-9D26-AEEDF70856EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{389912AE-40DB-483F-A3D0-59A87606E414}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{389912AE-40DB-483F-A3D0-59A87606E414}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{389912AE-40DB-483F-A3D0-59A87606E414}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{389912AE-40DB-483F-A3D0-59A87606E414}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F50809B5-10EC-4B70-B343-44958CE142E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F50809B5-10EC-4B70-B343-44958CE142E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F50809B5-10EC-4B70-B343-44958CE142E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F50809B5-10EC-4B70-B343-44958CE142E6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -24,11 +24,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\StratisBitcoinFullNode\Stratis.Bitcoin.Common\Stratis.Bitcoin.Common.csproj" />
-    <ProjectReference Include="..\..\..\StratisBitcoinFullNode\Stratis.Bitcoin\Stratis.Bitcoin.csproj" />
     <ProjectReference Include="..\BreezeCommon\BreezeProtocol\NStratis\Hashing\HashLib\HashLib.csproj" />
     <ProjectReference Include="..\BreezeCommon\BreezeProtocol\NStratis\NBitcoin\NBitcoin.csproj" />
     <ProjectReference Include="..\BreezeCommon\BreezeProtocol\NTumbleBit\NTumbleBit.csproj" />
+    <ProjectReference Include="..\StratisBitcoinFullNode\Stratis.Bitcoin.Common\Stratis.Bitcoin.Common.csproj" />
+    <ProjectReference Include="..\StratisBitcoinFullNode\Stratis.Bitcoin\Stratis.Bitcoin.csproj" />
   </ItemGroup>
 
 </Project>
