@@ -1,2 +1,2 @@
 # BreezeClient
-Breeze Wallet plugin/extension for the Breeze Privacy Protocol (based on NTumbleBit).
+Breeze Wallet plugin for the Breeze Privacy Protocol (based on NTumbleBit).
