@@ -1,0 +1,3 @@
+[submodule "BreezeCommon"]
+	path = BreezeCommon
+	url = https://github.com/BreezeHub/BreezeCommon.git
