@@ -1,2 +1,2 @@
 # BreezeClient
-Breeze TumbleBit Client
+Breeze Wallet plugin/extension for the Breeze Privacy Protocol (based on NTumbleBit).
