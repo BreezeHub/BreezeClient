@@ -1,19 +1,19 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.15
+VisualStudioVersion = 15.0.26430.16
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Breeze.TumbleBit.Client", "Breeze.TumbleBit.Client\Breeze.TumbleBit.Client.csproj", "{0F136FAA-8892-4859-AAF6-48FE0A56E124}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTumbleBit", "BreezeCommon\BreezeProtocol\NTumbleBit\NTumbleBit.csproj", "{160E5F82-4197-433C-84A9-43DE8B3769AC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NBitcoin", "BreezeCommon\BreezeProtocol\NStratis\NBitcoin\NBitcoin.csproj", "{C6FF42F5-0173-4456-95AB-D08A29159F37}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HashLib", "BreezeCommon\BreezeProtocol\NStratis\Hashing\HashLib\HashLib.csproj", "{22B7B152-5E4E-472B-9D26-AEEDF70856EA}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stratis.Bitcoin", "StratisBitcoinFullNode\Stratis.Bitcoin\Stratis.Bitcoin.csproj", "{389912AE-40DB-483F-A3D0-59A87606E414}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stratis.Bitcoin.Common", "StratisBitcoinFullNode\Stratis.Bitcoin.Common\Stratis.Bitcoin.Common.csproj", "{F50809B5-10EC-4B70-B343-44958CE142E6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NBitcoin", "StratisBitcoinFullNode\NStratis\NBitcoin\NBitcoin.csproj", "{6CCCE7DF-13D0-40DC-85E4-25E9C0F7D4C5}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HashLib", "StratisBitcoinFullNode\NStratis\Hashing\HashLib\HashLib.csproj", "{BBC6BDA6-F6EF-444B-86CF-5797E53BA20D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,14 +29,6 @@ Global
 		{160E5F82-4197-433C-84A9-43DE8B3769AC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{160E5F82-4197-433C-84A9-43DE8B3769AC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{160E5F82-4197-433C-84A9-43DE8B3769AC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C6FF42F5-0173-4456-95AB-D08A29159F37}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C6FF42F5-0173-4456-95AB-D08A29159F37}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C6FF42F5-0173-4456-95AB-D08A29159F37}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C6FF42F5-0173-4456-95AB-D08A29159F37}.Release|Any CPU.Build.0 = Release|Any CPU
-		{22B7B152-5E4E-472B-9D26-AEEDF70856EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{22B7B152-5E4E-472B-9D26-AEEDF70856EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{22B7B152-5E4E-472B-9D26-AEEDF70856EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{22B7B152-5E4E-472B-9D26-AEEDF70856EA}.Release|Any CPU.Build.0 = Release|Any CPU
 		{389912AE-40DB-483F-A3D0-59A87606E414}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{389912AE-40DB-483F-A3D0-59A87606E414}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{389912AE-40DB-483F-A3D0-59A87606E414}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -45,6 +37,14 @@ Global
 		{F50809B5-10EC-4B70-B343-44958CE142E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F50809B5-10EC-4B70-B343-44958CE142E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F50809B5-10EC-4B70-B343-44958CE142E6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6CCCE7DF-13D0-40DC-85E4-25E9C0F7D4C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6CCCE7DF-13D0-40DC-85E4-25E9C0F7D4C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6CCCE7DF-13D0-40DC-85E4-25E9C0F7D4C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6CCCE7DF-13D0-40DC-85E4-25E9C0F7D4C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BBC6BDA6-F6EF-444B-86CF-5797E53BA20D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBC6BDA6-F6EF-444B-86CF-5797E53BA20D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BBC6BDA6-F6EF-444B-86CF-5797E53BA20D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BBC6BDA6-F6EF-444B-86CF-5797E53BA20D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
