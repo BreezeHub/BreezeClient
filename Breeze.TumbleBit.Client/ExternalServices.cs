@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using NBitcoin;
+﻿using NBitcoin;
 using NTumbleBit;
+using NTumbleBit.Services;
 using Stratis.Bitcoin.Features.MemoryPool;
 
 namespace Breeze.TumbleBit.Client
