@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Breeze.TumbleBit.Client.CLI": {
+      "commandName": "Project",
+      "commandLineArgs": "-ctb xxxx -origin yyyy -destination xxxx"
+    }
+  }
+}
