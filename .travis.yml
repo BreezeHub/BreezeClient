@@ -24,6 +24,6 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then ulimit -n 1024; fi
 
 install:
-  - dotnet restore BreezeServer.sln
+  - dotnet restore BreezeClient.sln
 script:
   - echo "Let's write some tests"
