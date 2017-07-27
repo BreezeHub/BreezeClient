@@ -26,4 +26,4 @@ before_install:
 install:
   - dotnet restore BreezeClient.sln
 script:
-  - echo "Let's write some tests"
+  - echo "Let's write some tests next"
