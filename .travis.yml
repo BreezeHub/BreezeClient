@@ -13,7 +13,6 @@ matrix:
 
 branches:
   only:
-  - feature/ci
   - master
 
 # Work around NuGet issue #2163

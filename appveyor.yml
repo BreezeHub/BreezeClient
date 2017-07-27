@@ -2,7 +2,6 @@ version: '1.0.{build}'
 image: Visual Studio 2017
 branches:
   only:
-  - feature/ci
   - master
 
 # see http://status.appveyor.com/ re:connectivity issues for nuget
