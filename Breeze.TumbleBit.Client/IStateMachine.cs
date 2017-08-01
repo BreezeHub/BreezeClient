@@ -17,10 +17,5 @@
         /// Deletes the state of the current tumbling session..
         /// </summary>
         void Delete();
-
-        /// <summary>
-        /// Updates this the state of the current tumbling session.
-        /// </summary>
-        void Update();
     }
 }

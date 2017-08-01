@@ -130,8 +130,7 @@ namespace Breeze.TumbleBit.Client
             this.tumblingState.LastBlockReceivedHeight = height;
             this.tumblingState.Save();
             
-            // update the state of the tumbling session in this new block
-            this.tumblingState.Update();
+            // TODO update the state of the tumbling session in this new block
         }
     }
 }
