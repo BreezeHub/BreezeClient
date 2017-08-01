@@ -44,13 +44,7 @@ namespace Breeze.TumbleBit.Client
 
         [JsonIgnore]
         public Wallet DestinationWallet { get; set; }
-
-        [JsonIgnore]
-        public ITumblerService AliceClient { get; set; }
-
-        [JsonIgnore]
-        public ITumblerService BobClient { get; set; }
-
+        
         [JsonConstructor]
         public TumblingState()
         {
@@ -67,12 +61,6 @@ namespace Breeze.TumbleBit.Client
             this.walletManager = walletManager;
             this.watchOnlyWalletManager = watchOnlyWalletManager;
             this.coinType = (CoinType)network.Consensus.CoinType;
-        }
-
-        public void SetClients(ITumblerService tumblerService)
-        {
-            this.AliceClient = tumblerService;
-            this.BobClient = tumblerService;
         }
 
         /// <inheritdoc />

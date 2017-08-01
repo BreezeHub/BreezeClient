@@ -43,6 +43,9 @@ namespace Breeze.TumbleBit.Client
         /// <inheritdoc />
         public async Task<ClassicTumblerParameters> ConnectToTumblerAsync(Uri serverAddress)
         {
+            // TODO this method will probably need to change as the connection to a tumbler is currently done during configuration
+            // of the TumblebitRuntime. This method can then be modified to potentially be a convenience method 
+            // where a user wants to check a tumbler's paramters before commiting to tumbling (and therefore before configuring the runtime).
             this.tumblerService = new TumblerService(serverAddress);
             this.TumblerParameters = await this.tumblerService.GetClassicTumblerParametersAsync();
 
@@ -57,7 +60,6 @@ namespace Breeze.TumbleBit.Client
             // update and save the state
             this.tumblingState.TumblerUri = serverAddress;
             this.tumblingState.TumblerParameters = this.TumblerParameters;
-            this.tumblingState.SetClients(this.tumblerService);
             this.tumblingState.Save();
 
             return this.TumblerParameters;
