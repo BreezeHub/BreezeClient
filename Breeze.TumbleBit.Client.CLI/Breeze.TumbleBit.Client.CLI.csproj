@@ -9,15 +9,4 @@
     <ProjectReference Include="..\Breeze.TumbleBit.Client\Breeze.TumbleBit.Client.csproj" />
   </ItemGroup>
 
-  <!-- The problem here is that when a project references both a nuget package and a csproj that lead to the same assembly, the compiler throws an exception.
-       The behavior that's expected is that the project reference wins.
-       Here, having NStratis in both the Stratis.Bitcoin project and in the NTumblebit project leads to an error. 
-       Workaround taken from here https://github.com/dotnet/sdk/issues/364 
-       TODO Remove this once we use nuget packages -->
-  <Target Name="WorkAroundPackageAndProjectReferenceConflict" BeforeTargets="ResolveLockFileReferences">
-    <ItemGroup>
-      <ResolvedCompileFileDefinitions Remove="@(ResolvedCompileFileDefinitions)" Condition="'%(ResolvedCompileFileDefinitions.Filename)' == 'HashLib'" />
-      <ResolvedCompileFileDefinitions Remove="@(ResolvedCompileFileDefinitions)" Condition="'%(ResolvedCompileFileDefinitions.Filename)' == 'NBitcoin'" />
-    </ItemGroup>
-  </Target>
 </Project>
