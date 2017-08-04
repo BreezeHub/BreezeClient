@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Breeze.TumbleBit.Client;
 using Breeze.TumbleBit.Models;
-using Stratis.Bitcoin.Common.JsonErrors;
+using Stratis.Bitcoin.Utilities.JsonErrors;
 
 namespace Breeze.TumbleBit.Controllers
 {
