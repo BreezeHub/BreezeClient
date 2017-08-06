@@ -7,17 +7,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Breeze.TumbleBit.Client\Breeze.TumbleBit.Client.csproj" />
+    <ProjectReference Include="..\StratisBitcoinFullNode\Stratis.Bitcoin.Api\Stratis.Bitcoin.Api.csproj" />
+    <ProjectReference Include="..\StratisBitcoinFullNode\Stratis.Bitcoin.Features.LightWallet\Stratis.Bitcoin.Features.LightWallet.csproj" />
+    <ProjectReference Include="..\StratisBitcoinFullNode\Stratis.Bitcoin\Stratis.Bitcoin.csproj" />
   </ItemGroup>
 
-  <!-- The problem here is that when a project references both a nuget package and a csproj that lead to the same assembly, the compiler throws an exception.
-       The behavior that's expected is that the project reference wins.
-       Here, having NStratis in both the Stratis.Bitcoin project and in the NTumblebit project leads to an error. 
-       Workaround taken from here https://github.com/dotnet/sdk/issues/364 
-       TODO Remove this once we use nuget packages -->
-  <Target Name="WorkAroundPackageAndProjectReferenceConflict" BeforeTargets="ResolveLockFileReferences">
-    <ItemGroup>
-      <ResolvedCompileFileDefinitions Remove="@(ResolvedCompileFileDefinitions)" Condition="'%(ResolvedCompileFileDefinitions.Filename)' == 'HashLib'" />
-      <ResolvedCompileFileDefinitions Remove="@(ResolvedCompileFileDefinitions)" Condition="'%(ResolvedCompileFileDefinitions.Filename)' == 'NBitcoin'" />
-    </ItemGroup>
-  </Target>
 </Project>
