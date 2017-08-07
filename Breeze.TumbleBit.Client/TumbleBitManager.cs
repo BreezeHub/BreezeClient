@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
 using NTumbleBit.ClassicTumbler;
+using NTumbleBit.ClassicTumbler.CLI;
+using NTumbleBit.ClassicTumbler.Client;
 using Stratis.Bitcoin.Features.Wallet;
 using Stratis.Bitcoin.Features.WatchOnlyWallet;
 using Stratis.Bitcoin.Signals;
@@ -25,6 +27,8 @@ namespace Breeze.TumbleBit.Client
         private readonly Network network;
         private TumblingState tumblingState;
         private IDisposable blockReceiver;
+        private TumblerClientRuntime runtime;
+        private StateMachinesExecutor stateMachine;
      
         private ClassicTumblerParameters TumblerParameters { get; set; }
 
@@ -46,18 +50,29 @@ namespace Breeze.TumbleBit.Client
             // TODO this method will probably need to change as the connection to a tumbler is currently done during configuration
             // of the TumblebitRuntime. This method can then be modified to potentially be a convenience method 
             // where a user wants to check a tumbler's paramters before commiting to tumbling (and therefore before configuring the runtime).
-            this.tumblerService = new TumblerService(serverAddress);
-            this.TumblerParameters = await this.tumblerService.GetClassicTumblerParametersAsync();
+
+            // TODO: Temporary measure
+            string[] args = { "-testnet" };
+
+            var config = new TumblerClientConfiguration();
+            config.LoadArgs(args);
+
+            // AcceptAllClientConfiguration should be used if the interaction is null
+            this.runtime = TumblerClientRuntime.FromConfiguration(config, null);
+
+            //this.tumblerService = new TumblerService(serverAddress);
+            //this.TumblerParameters = await this.tumblerService.GetClassicTumblerParametersAsync();
+            this.TumblerParameters = runtime.TumblerParameters;
 
             if (this.TumblerParameters.Network != this.network)
             {
                 throw new Exception($"The tumbler is on network {this.TumblerParameters.Network} while the wallet is on network {this.network}.");
             }
             
-            // load the current tumbling state fromt he file system
+            // Load the current tumbling state fromt the file system
             this.tumblingState.LoadStateFromMemory();
             
-            // update and save the state
+            // Update and save the state
             this.tumblingState.TumblerUri = serverAddress;
             this.tumblingState.TumblerParameters = this.TumblerParameters;
             this.tumblingState.Save();
@@ -69,11 +84,13 @@ namespace Breeze.TumbleBit.Client
         public Task TumbleAsync(string originWalletName, string destinationWalletName)
         {
             // make sure the tumbler service is initialized
-            if (this.TumblerParameters == null || this.tumblerService == null)
+            if (this.TumblerParameters == null || this.runtime == null)
             {
                 throw new Exception("Please connect to the tumbler first.");
             }
 
+            // TODO: Remove wallet logic while getting tumbler interaction to work
+            /*
             // make sure that the user is not trying to resume the process with a different wallet
             if (!string.IsNullOrEmpty(this.tumblingState.DestinationWalletName) && this.tumblingState.DestinationWalletName != destinationWalletName)
             {
@@ -97,11 +114,14 @@ namespace Breeze.TumbleBit.Client
             this.tumblingState.DestinationWalletName = destinationWalletName;
             this.tumblingState.OriginWallet = originWallet;
             this.tumblingState.OriginWalletName = originWalletName;
-
+            */
             this.tumblingState.Save();
 
-            // subscribe to receiving blocks
+            // Subscribe to receive new block notifications
             this.blockReceiver = this.signals.Blocks.Subscribe(new BlockObserver(this.chain, this));
+
+            this.stateMachine = new StateMachinesExecutor(this.runtime);
+            this.stateMachine.Start();
 
             return Task.CompletedTask;
         }
