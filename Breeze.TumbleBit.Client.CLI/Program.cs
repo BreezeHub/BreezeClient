@@ -16,11 +16,22 @@ namespace Breeze.TumbleBit.Client.CLI
     {
         static void Main(string[] args)
         {
+            string[] args2 = {
+                "-testnet",
+                "-ctb",
+                //"ctb://7obtcd7mkosmxeuh.onion?h=03c632023c4a8587845ad918b8e5f53f7bf18319",
+                "ctb://wljlc26vwmc65lk6.onion?h=0f802acf528ca7a0742c3074ba7daa35bdae98c9",
+                "-origin",
+                "xxxx",
+                "-destination",
+                "yyyy"
+            };
+
 	        FuncLoggerFactory loggerFactory =
 		        new FuncLoggerFactory(i => new CustomerConsoleLogger(i, (a, b) => true, false));
 			Logs.Configure(loggerFactory);
 
-			ArgsReader argsReader = new ArgsReader(args);
+			ArgsReader argsReader = new ArgsReader(args2);
 	        if (!argsReader.VerifyArgs()) return;
 
 			//we don't want to be anywhere near MainNet
@@ -30,11 +41,12 @@ namespace Breeze.TumbleBit.Client.CLI
 	        Uri tumblerUri = new Uri(argsReader.UriString);
 
 			//Start the engines!
-			NodeSettings nodeSettings = NodeSettings.FromArguments(args);
+			NodeSettings nodeSettings = NodeSettings.FromArguments(args2);
 			FullNode fullNode = StartupFullNode(nodeSettings, tumblerUri);
             fullNode.Run();
 
-			ITumbleBitManager tumbleBitManager;// = new TumbleBitManager(loggerFactory, );
+            // Not needed at all, invoke tumbler connection via the API
+			//ITumbleBitManager tumbleBitManager = new TumbleBitManager(loggerFactory, fullNode.WalletManager, null, fullNode.Chain, Network.TestNet, fullNode.Signals);
 
 			//use the tumblebitManager with a wait
 	        //tumbleBitManager.ConnectToTumblerAsync(tumblerUri).GetAwaiter().GetResult();
