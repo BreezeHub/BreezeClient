@@ -32,19 +32,15 @@ namespace Breeze.TumbleBit.Client.Services
     public class FullNodeWalletCache
     {
         private readonly IRepository _Repo;
-        private CoinType coinType;
         private FullNode fullNode;
-        public FullNodeWalletCache(IRepository repository, FullNode fullNode, CoinType coinType)
+        public FullNodeWalletCache(IRepository repository, FullNode fullNode)
         {
             if(repository == null)
                 throw new ArgumentNullException("repository");
-            if (coinType == null)
-                throw new ArgumentNullException("coinType");
             if (fullNode == null)
                 throw new ArgumentNullException("fullNode");
             
             _Repo = repository;
-            this.coinType = coinType;
             this.fullNode = fullNode;
         }
 

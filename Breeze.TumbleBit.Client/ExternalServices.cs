@@ -7,6 +7,7 @@ using NTumbleBit.Services;
 using Stratis.Bitcoin;
 using Stratis.Bitcoin.Features.MemoryPool;
 using Stratis.Bitcoin.Features.Wallet;
+using Stratis.Bitcoin.Features.WatchOnlyWallet;
 
 namespace Breeze.TumbleBit.Client
 {
@@ -45,10 +46,15 @@ namespace Breeze.TumbleBit.Client
                 };
             }
 
+            WatchOnlyWalletManager watchOnlyWalletManager = new WatchOnlyWalletManager(fullNode.Settings.LoggerFactory, fullNode.ConnectionManager, fullNode.Network, fullNode.Chain, fullNode.Settings, fullNode.DataFolder);
+
+            // TODO: Does the watch-only wallet need to be saved properly for shutdown?
+            watchOnlyWalletManager.Initialize();
+
             FullNodeWalletCache cache = new FullNodeWalletCache(repository, fullNode, coinType);
-            service.WalletService = new FullNodeWalletService(fullNode.WalletManager, walletName, coinType, walletTransactionHandler, accountName);
+            service.WalletService = new FullNodeWalletService(fullNode, walletName, coinType, accountName);
             service.BroadcastService = new FullNodeBroadcastService(cache, repository, fullNode.WalletManager);
-            service.BlockExplorerService = new FullNodeBlockExplorerService(cache, repository, fullNode.WalletManager, fullNode.Network);
+            service.BlockExplorerService = new FullNodeBlockExplorerService(cache, repository, fullNode, watchOnlyWalletManager);
             service.TrustedBroadcastService = new FullNodeTrustedBroadcastService(service.BroadcastService, service.BlockExplorerService, repository, cache, tracker, fullNode.Network)
             {
                 // BlockExplorer will already track the addresses, since they used a shared bitcoind, no need of tracking again (this would overwrite labels)

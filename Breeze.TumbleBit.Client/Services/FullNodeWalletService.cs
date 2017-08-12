@@ -8,34 +8,33 @@ using Newtonsoft.Json.Linq;
 using NTumbleBit.PuzzlePromise;
 using NBitcoin.DataEncoders;
 using NTumbleBit.Services;
+using Stratis.Bitcoin;
 using Stratis.Bitcoin.Features.Wallet;
+using Stratis.Bitcoin.Features.WatchOnlyWallet;
 
 namespace Breeze.TumbleBit.Client.Services
 {
     public class FullNodeWalletService : IWalletService
     {
-        private WalletManager walletManager;
+        private FullNode fullNode;
         private string walletName;
-        private CoinType coinType;
-        private WalletTransactionHandler walletTransactionHandler;
         private string accountName;
 
-        public FullNodeWalletService(WalletManager walletManager, string walletName, CoinType coinType, WalletTransactionHandler walletTransactionHandler, string accountName)
+        public FullNodeWalletService(FullNode fullNode, string walletName, string accountName)
         {
-            this.walletManager = walletManager ?? throw new ArgumentNullException(nameof(walletManager));
+            this.fullNode = fullNode;
             this.walletName = walletName;
-            this.coinType = coinType;
-            this.walletTransactionHandler = walletTransactionHandler;
             this.accountName = accountName;
         }
 
         public IDestination GenerateAddress()
         {
-            Wallet wallet = walletManager.GetWallet(walletName);
+            Wallet wallet = this.fullNode.WalletManager.GetWallet(walletName);
 
             HdAddress hdAddress = null;
             BitcoinAddress address = null;
-            foreach (var account in wallet.GetAccountsByCoinType(this.coinType))
+
+            foreach (var account in wallet.GetAccountsByCoinType((CoinType)this.fullNode.Network.Consensus.CoinType))
             {
                 // Iterate through accounts until unused address is found
                 hdAddress = account.GetFirstUnusedReceivingAddress();
@@ -76,7 +75,7 @@ namespace Breeze.TumbleBit.Client.Services
             txBuildContext.Sign = true;
 
             // FundTransaction modifies tx directly
-            this.walletTransactionHandler.FundTransaction(txBuildContext, tx);
+            this.fullNode.WalletTransactionHandler.FundTransaction(txBuildContext, tx);
 
             return tx;
         }

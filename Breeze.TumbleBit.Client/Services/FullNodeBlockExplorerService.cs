@@ -10,6 +10,7 @@ using System.Threading;
 using NTumbleBit.Services;
 using Stratis.Bitcoin;
 using Stratis.Bitcoin.Features.Wallet;
+using Stratis.Bitcoin.Features.WatchOnlyWallet;
 
 namespace Breeze.TumbleBit.Client.Services
 {
@@ -17,9 +18,9 @@ namespace Breeze.TumbleBit.Client.Services
     {
         FullNodeWalletCache _Cache;
         private FullNode fullNode;
-        private Network network;
+        private IWatchOnlyWalletManager watchOnlyWalletManager;
 
-        public FullNodeBlockExplorerService(FullNodeWalletCache cache, IRepository repo, FullNode fullNode, Network network)
+        public FullNodeBlockExplorerService(FullNodeWalletCache cache, IRepository repo, FullNode fullNode, IWatchOnlyWalletManager watchOnlyWalletManager)
         {
             if (repo == null)
                 throw new ArgumentNullException("repo");
@@ -27,13 +28,13 @@ namespace Breeze.TumbleBit.Client.Services
                 throw new ArgumentNullException("cache");
             if (fullNode == null)
                 throw new ArgumentNullException("fullNode");
-            if (network == null)
-                throw new ArgumentNullException("network");
-            
+            if (watchOnlyWalletManager == null)
+                throw new ArgumentNullException("watchOnlyWalletManager");
+
             _Repo = repo;
             _Cache = cache;
             this.fullNode = fullNode;
-            this.network = network;
+            this.watchOnlyWalletManager = watchOnlyWalletManager;
         }
 
         IRepository _Repo;
@@ -63,7 +64,7 @@ namespace Breeze.TumbleBit.Client.Services
             if (scriptPubKey == null)
                 throw new ArgumentNullException(nameof(scriptPubKey));
             
-            var address = scriptPubKey.GetDestinationAddress(this.network);
+            var address = scriptPubKey.GetDestinationAddress(this.fullNode.Network);
             if (address == null)
                 return new TransactionInformation[0];
 
@@ -173,13 +174,12 @@ namespace Breeze.TumbleBit.Client.Services
 
         public void Track(Script scriptPubkey)
         {
-            RPCClient.ImportAddress(scriptPubkey, "", false);
+            this.watchOnlyWalletManager.Watch(scriptPubkey);
         }
 
         public int GetBlockConfirmations(uint256 blockId)
         {
-            var blockHash = this.fullNode.BlockStoreManager?.BlockRepository?.GetTrxBlockIdAsync(txId).Result;
-            var block = this.fullNode.Chain.GetBlock(blockHash);
+            var block = this.fullNode.Chain.GetBlock(blockId);
             var tipHeight = this.fullNode.Chain.Tip.Height;
             var confirmations = tipHeight - block.Height;
             var confCount = Math.Max(0, confirmations);

@@ -8,7 +8,8 @@ using NBitcoin;
 using NTumbleBit;
 using NTumbleBit.Logging;
 using NTumbleBit.Services;
-using Stratis.Bitcoin.Features.Wallet;
+using Stratis.Bitcoin;
+using Stratis.Bitcoin.Features.WatchOnlyWallet;
 
 namespace Breeze.TumbleBit.Client.Services
 {
@@ -27,9 +28,10 @@ namespace Breeze.TumbleBit.Client.Services
         }
 
         FullNodeWalletCache _Cache;
-        private WalletManager walletManager;
+        private FullNode fullNode;
+        private IWatchOnlyWalletManager watchOnlyWalletManager;
 
-        public FullNodeBroadcastService(FullNodeWalletCache cache, IRepository repository, WalletManager walletManager)
+        public FullNodeBroadcastService(FullNodeWalletCache cache, IRepository repository, FullNode fullNode, IWatchOnlyWalletManager watchOnlyWalletManager)
         {
             if (repository == null)
                 throw new ArgumentNullException(nameof(repository));
@@ -38,8 +40,7 @@ namespace Breeze.TumbleBit.Client.Services
             
             _Repository = repository;
             _Cache = cache;
-            _BlockExplorerService = new FullNodeBlockExplorerService(cache, repository, walletManager);
-            this.walletManager = walletManager;
+            _BlockExplorerService = new FullNodeBlockExplorerService(cache, repository, fullNode, watchOnlyWalletManager);
         }
 
         private readonly FullNodeBlockExplorerService _BlockExplorerService;
@@ -126,7 +127,7 @@ namespace Breeze.TumbleBit.Client.Services
 
             try
             {
-                if (!this.walletManager.SendTransaction(tx.Transaction.ToHex()))
+                if (!this.fullNode.WalletManager.SendTransaction(tx.Transaction.ToHex()))
                     return false;
                 
                 _Cache.ImportTransaction(tx.Transaction, 0);
