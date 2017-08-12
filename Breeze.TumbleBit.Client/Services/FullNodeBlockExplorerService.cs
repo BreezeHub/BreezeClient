@@ -250,13 +250,15 @@ namespace Breeze.TumbleBit.Client.Services
 
         public bool TrackPrunedTransaction(Transaction transaction, MerkleBlock merkleProof)
         {
-            var result = RPCClient.SendCommandNoThrows("importprunedfunds", transaction.ToHex(), Encoders.Hex.EncodeData(merkleProof.ToBytes()));
-            var success = result != null && result.Error == null;
-            if (success)
-            {
-                _Cache.ImportTransaction(transaction, GetBlockConfirmations(merkleProof.Header.GetHash()));
-            }
-            return success;
+            var blockHash = this.fullNode.BlockStoreManager?.BlockRepository?.GetTrxBlockIdAsync(transaction.GetHash()).Result;
+            var chainBlock = this.fullNode.Chain.GetBlock(blockHash);
+            var block = this.fullNode.BlockStoreManager?.BlockRepository?.GetAsync(blockHash).Result;
+
+            this.fullNode.WalletManager.ProcessTransaction(transaction, chainBlock.Height, block);
+
+            _Cache.ImportTransaction(transaction, GetBlockConfirmations(merkleProof.Header.GetHash()));
+
+            return true;
         }
     }
 }

@@ -39,8 +39,12 @@ namespace Breeze.TumbleBit.Client
             // TODO: Does the watch-only wallet need to be saved properly for shutdown?
             watchOnlyWalletManager.Initialize();
 
+            // TODO: These ultimately need to be brought in from the tumblebit client UI
+            string dummyWalletName = "";
+            string dummyAccountName = "";
+
             FullNodeWalletCache cache = new FullNodeWalletCache(repository, fullNode, watchOnlyWalletManager);
-            service.WalletService = new FullNodeWalletService(fullNode, walletName, accountName);
+            service.WalletService = new FullNodeWalletService(fullNode, dummyWalletName, dummyAccountName);
             service.BroadcastService = new FullNodeBroadcastService(cache, repository, fullNode, watchOnlyWalletManager);
             service.BlockExplorerService = new FullNodeBlockExplorerService(cache, repository, fullNode, watchOnlyWalletManager);
             service.TrustedBroadcastService = new FullNodeTrustedBroadcastService(service.BroadcastService, service.BlockExplorerService, repository, cache, tracker, fullNode, watchOnlyWalletManager)

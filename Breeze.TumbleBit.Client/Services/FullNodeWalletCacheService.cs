@@ -153,9 +153,6 @@ namespace Breeze.TumbleBit.Client.Services
             List<FullNodeWalletEntry> array = new List<FullNodeWalletEntry>();
             knownTransactions = new HashSet<uint256>();
             var removeFromCache = new HashSet<uint256>(_TransactionsByTxId.Values.Select(tx => tx.GetHash()));
-            int count = 100;
-            int skip = 0;
-            int highestConfirmation = 0;
 
             // List all transactions, including those in watch-only wallet
             // (zero confirmations are acceptable)
