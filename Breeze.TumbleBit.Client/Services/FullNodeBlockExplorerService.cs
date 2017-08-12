@@ -73,18 +73,43 @@ namespace Breeze.TumbleBit.Client.Services
 
             if (withProof)
             {
+                bool found;
                 foreach (var tx in results.ToList())
                 {
+                    found = false;
                     MerkleBlock proof = null;
-                    var result = RPCClient.SendCommandNoThrows("gettxoutproof", new JArray(tx.Transaction.GetHash().ToString()));
-                    if (result == null || result.Error != null)
+
+                    // TODO: Not efficient
+                    foreach (var wallet in this.fullNode.WalletManager.Wallets)
+                    {
+                        if (found)
+                            break;
+
+                        foreach (var account in wallet.GetAccountsByCoinType((CoinType)this.fullNode.Network.Consensus.CoinType))
+                        {
+                            var txData = account.GetTransactionsById(tx.Transaction.GetHash());
+                            if (txData != null)
+                            {
+                                found = true;
+
+                                // TODO: Is it possible for GetTransactionsById to return multiple results?
+                                var trx = txData.First<TransactionData>();
+
+                                proof = new MerkleBlock();
+                                proof.ReadWrite(Encoders.Hex.DecodeData(trx.MerkleProof.ToHex()));
+
+                                tx.MerkleProof = proof;
+
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!found)
                     {
                         results.Remove(tx);
                         continue;
                     }
-                    proof = new MerkleBlock();
-                    proof.ReadWrite(Encoders.Hex.DecodeData(result.ResultString));
-                    tx.MerkleProof = proof;
                 }
             }
             return results.ToArray();
@@ -92,17 +117,52 @@ namespace Breeze.TumbleBit.Client.Services
 
         private List<TransactionInformation> QueryWithListReceivedByAddress(bool withProof, BitcoinAddress address)
         {
-            var result = RPCClient.SendCommand("listreceivedbyaddress", 0, false, true, address.ToString());
-            var transactions = ((JArray)result.Result).OfType<JObject>().Select(o => o["txids"]).OfType<JArray>().SingleOrDefault();
-            if (transactions == null)
+            // List all transactions involving a particular address, including those in watch-only wallet
+            // (zero confirmations are acceptable)
+
+            List<uint256> txIdList = new List<uint256>();
+
+            // First examine watch-only wallet
+            var watchOnlyWallet = this.watchOnlyWalletManager.GetWallet();
+
+            // TODO: This seems highly inefficient, maybe we need a cache or quicker lookup mechanism
+            foreach (var watchOnlyTx in watchOnlyWallet.Transactions)
+            {
+                // Looking for funds received by address only, so only examine transaction outputs
+                foreach (var vout in watchOnlyTx.vout)
+                {
+                    // Look at each of the addresses contained in the scriptPubKey to see if they match
+                    foreach (var addr in vout.scriptPubKey.addresses)
+                    {
+                        if (address.ToString() == addr)
+                        {
+                            txIdList.Add(new uint256(watchOnlyTx.txid));
+                        }
+                    }
+                }
+            }
+
+            // Search transactions in regular wallet for matching address criteria
+
+            foreach (var wallet in this.fullNode.WalletManager.Wallets)
+            {
+                foreach (var walletTx in wallet.GetAllTransactionsByCoinType((CoinType)this.fullNode.Network.Consensus.CoinType))
+                {
+                    if (address == walletTx.ScriptPubKey.GetDestinationAddress(this.fullNode.Network))
+                    {
+                        txIdList.Add(walletTx.Id);
+                    }
+                }
+            }
+
+            if (txIdList.Count == 0)
                 return null;
 
             HashSet<uint256> resultsSet = new HashSet<uint256>();
             List<TransactionInformation> results = new List<TransactionInformation>();
-            foreach (var txIdObj in transactions)
+            foreach (var txId in txIdList)
             {
-                var txId = new uint256(txIdObj.ToString());
-                //May have duplicates
+                // May have duplicates
                 if (!resultsSet.Contains(txId))
                 {
                     var tx = GetTransaction(txId);
@@ -169,6 +229,7 @@ namespace Breeze.TumbleBit.Client.Services
                     Transaction = trx
                 };
             }
+            // TODO: Replace this with the correct exception type
             catch (RPCException) { return null; }
         }
 

@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Stratis.Bitcoin;
 using Stratis.Bitcoin.Features.BlockStore;
+using Stratis.Bitcoin.Features.WatchOnlyWallet;
 using Stratis.Bitcoin.Features.Wallet;
 
 namespace Breeze.TumbleBit.Client.Services
@@ -33,15 +34,19 @@ namespace Breeze.TumbleBit.Client.Services
     {
         private readonly IRepository _Repo;
         private FullNode fullNode;
-        public FullNodeWalletCache(IRepository repository, FullNode fullNode)
+        private IWatchOnlyWalletManager watchOnlyWalletManager;
+        public FullNodeWalletCache(IRepository repository, FullNode fullNode, IWatchOnlyWalletManager watchOnlyWalletManager)
         {
             if(repository == null)
                 throw new ArgumentNullException("repository");
             if (fullNode == null)
                 throw new ArgumentNullException("fullNode");
-            
+            if (watchOnlyWalletManager == null)
+                throw new ArgumentNullException("watchOnlyWalletManager");
+
             _Repo = repository;
             this.fullNode = fullNode;
+            this.watchOnlyWalletManager = watchOnlyWalletManager;
         }
 
         volatile uint256 _RefreshedAtBlock;
@@ -95,7 +100,6 @@ namespace Breeze.TumbleBit.Client.Services
 
         ConcurrentDictionary<uint256, Transaction> _TransactionsByTxId = new ConcurrentDictionary<uint256, Transaction>();
 
-
         private Transaction FetchTransaction(uint256 txId)
         {
             try
@@ -106,34 +110,6 @@ namespace Breeze.TumbleBit.Client.Services
                     trx = this.fullNode.BlockStoreManager?.BlockRepository?.GetTrxAsync(txId).Result;
 
                 return trx;
-
-                //check in the wallet tx
-                /*foreach (var wallet in this.walletManager.Wallets)
-                {
-                    foreach (var account in wallet.GetAccountsByCoinType(this.coinType))
-                    {
-                        var txData = account.GetTransactionsById(txId);
-                        if (txData != null)
-                        {
-                            // Look up Transaction object from the actual blockchain.
-                            // A Transaction is not a wallet-level concept as there
-                            // can be multiple recipients not contained with a
-                            // wallet controlled by the node.
-
-                            // TODO: Make helper function to retrive full Tranasction from chain by ID
-                        }
-                    }
-                }*/
-
-                //var result = _RPCClient.SendCommandNoThrows("gettransaction", txId.ToString(), true);
-                //if(result == null || result.Error != null)
-                //{
-                //    //check in the txindex
-                //    result = _RPCClient.SendCommandNoThrows("getrawtransaction", txId.ToString(), 1);
-                //    if(result == null || result.Error != null)
-                //        return null;
-                //}
-                //var tx = new Transaction((string)result.Result["hex"]);
             }
             catch(Exception) { return null; }
         }
@@ -158,7 +134,6 @@ namespace Breeze.TumbleBit.Client.Services
 
         private Transaction GetCachedTransaction(uint256 txId)
         {
-
             Transaction tx = null;
             if(_TransactionsByTxId.TryGetValue(txId, out tx))
             {
@@ -182,39 +157,59 @@ namespace Breeze.TumbleBit.Client.Services
             int skip = 0;
             int highestConfirmation = 0;
 
-            while(true)
+            // List all transactions, including those in watch-only wallet
+            // (zero confirmations are acceptable)
+
+            List<uint256> txIdList = new List<uint256>();
+
+            // First examine watch-only wallet
+            var watchOnlyWallet = this.watchOnlyWalletManager.GetWallet();
+
+            foreach (var watchOnlyTx in watchOnlyWallet.Transactions)
             {
-                var result = _RPCClient.SendCommandNoThrows("listtransactions", "*", count, skip, true);
-                skip += count;
-                if(result.Error != null)
-                    return null;
-                var transactions = (JArray)result.Result;
-                foreach(var obj in transactions)
-                {
-                    var entry = new FullNodeWalletEntry();
-                    entry.Confirmations = obj["confirmations"] == null ? 0 : (int)obj["confirmations"];
-                    entry.TransactionId = new uint256((string)obj["txid"]);
-                    removeFromCache.Remove(entry.TransactionId);
-                    if(knownTransactions.Add(entry.TransactionId))
-                    {
-                        array.Add(entry);
-                    }
-                    if(obj["confirmations"] != null)
-                    {
-                        highestConfirmation = Math.Max(highestConfirmation, (int)obj["confirmations"]);
-                    }
-                }
-                if(transactions.Count < count || highestConfirmation >= 1400)
-                    break;
+                txIdList.Add(new uint256(watchOnlyTx.txid));
             }
-            foreach(var remove in removeFromCache)
+
+            // List transactions in regular wallet
+            foreach (var wallet in this.fullNode.WalletManager.Wallets)
+            {
+                foreach (var walletTx in wallet.GetAllTransactionsByCoinType((CoinType)this.fullNode.Network.Consensus.CoinType))
+                {
+                    txIdList.Add(walletTx.Id);
+                }
+            }
+
+            foreach(var txId in txIdList)
+            {
+                var blockHash = this.fullNode.BlockStoreManager?.BlockRepository?.GetTrxBlockIdAsync(txId).Result;
+                var block = this.fullNode.Chain.GetBlock(blockHash);
+                var blockHeight = block.Height;
+                var tipHeight = this.fullNode.Chain.Tip.Height;
+                var confirmations = tipHeight - blockHeight;
+                var confCount = Math.Max(0, confirmations);
+
+                var entry = new FullNodeWalletEntry()
+                {
+                    TransactionId = txId,
+                    Confirmations = confCount
+                };
+
+                removeFromCache.Remove(txId);
+                if (knownTransactions.Add(entry.TransactionId))
+                {
+                    array.Add(entry);
+                }
+
+                // TODO: We don't currently have a way of filtering out high confirmation transactions upfront
+            }
+
+            foreach (var remove in removeFromCache)
             {
                 Transaction opt;
                 _TransactionsByTxId.TryRemove(remove, out opt);
             }
             return array;
         }
-
 
         public void ImportTransaction(Transaction transaction, int confirmations)
         {
