@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 
 using Breeze.TumbleBit.Client.Services;
 using NBitcoin;
@@ -6,14 +6,12 @@ using NTumbleBit;
 using NTumbleBit.Services;
 using Stratis.Bitcoin;
 using Stratis.Bitcoin.Features.MemoryPool;
-using Stratis.Bitcoin.Features.Wallet;
-using Stratis.Bitcoin.Features.WatchOnlyWallet;
 
 namespace Breeze.TumbleBit.Client
 {
-    public class ExternalServices
+    public class ExternalServices : IExternalServices
     {
-        public static ExternalServices CreateUsingFullNode(IRepository repository, Tracker tracker, FullNode fullNode)
+        public static ExternalServices CreateUsingFullNode(IRepository repository, Tracker tracker, TumblingState tumblingState)
         {
             FeeRate minimumRate = new FeeRate(MempoolValidator.MinRelayTxFee.FeePerK);
 
@@ -25,7 +23,7 @@ namespace Breeze.TumbleBit.Client
             };
 
             // on regtest the estimatefee always fails
-            if (fullNode.Network == Network.RegTest)
+            if (tumblingState.TumblerNetwork == Network.RegTest)
             {
                 service.FeeService = new FullNodeFeeService()
                 {
@@ -34,20 +32,15 @@ namespace Breeze.TumbleBit.Client
                 };
             }
 
-            WatchOnlyWalletManager watchOnlyWalletManager = new WatchOnlyWalletManager(fullNode.Settings.LoggerFactory, fullNode.ConnectionManager, fullNode.Network, fullNode.Chain, fullNode.Settings, fullNode.DataFolder);
-
-            // TODO: Does the watch-only wallet need to be saved properly for shutdown?
-            watchOnlyWalletManager.Initialize();
-
             // TODO: These ultimately need to be brought in from the tumblebit client UI
             string dummyWalletName = "";
             string dummyAccountName = "";
 
-            FullNodeWalletCache cache = new FullNodeWalletCache(repository, fullNode, watchOnlyWalletManager);
-            service.WalletService = new FullNodeWalletService(fullNode, dummyWalletName, dummyAccountName);
-            service.BroadcastService = new FullNodeBroadcastService(cache, repository, fullNode, watchOnlyWalletManager);
-            service.BlockExplorerService = new FullNodeBlockExplorerService(cache, repository, fullNode, watchOnlyWalletManager);
-            service.TrustedBroadcastService = new FullNodeTrustedBroadcastService(service.BroadcastService, service.BlockExplorerService, repository, cache, tracker, fullNode, watchOnlyWalletManager)
+            FullNodeWalletCache cache = new FullNodeWalletCache(repository, tumblingState);
+            service.WalletService = new FullNodeWalletService(tumblingState, dummyWalletName, dummyAccountName);
+            service.BroadcastService = new FullNodeBroadcastService(cache, repository, tumblingState);
+            service.BlockExplorerService = new FullNodeBlockExplorerService(cache, repository, tumblingState);
+            service.TrustedBroadcastService = new FullNodeTrustedBroadcastService(service.BroadcastService, service.BlockExplorerService, repository, cache, tracker, tumblingState)
             {
                 // BlockExplorer will already track the addresses, since they used a shared bitcoind, no need of tracking again (this would overwrite labels)
                 TrackPreviousScriptPubKey = false

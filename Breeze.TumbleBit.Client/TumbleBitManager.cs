@@ -6,6 +6,8 @@ using NBitcoin;
 using NTumbleBit.ClassicTumbler;
 using NTumbleBit.ClassicTumbler.CLI;
 using NTumbleBit.ClassicTumbler.Client;
+using Stratis.Bitcoin.Features.BlockStore;
+using Stratis.Bitcoin.Features.MemoryPool;
 using Stratis.Bitcoin.Features.Wallet;
 using Stratis.Bitcoin.Features.WatchOnlyWallet;
 using Stratis.Bitcoin.Signals;
@@ -18,9 +20,13 @@ namespace Breeze.TumbleBit.Client
     /// <seealso cref="Breeze.TumbleBit.Client.ITumbleBitManager" />
     public class TumbleBitManager : ITumbleBitManager
     {
+        private ILoggerFactory loggerFactory;
         private ITumblerService tumblerService;
-        private readonly IWalletManager walletManager;
+        private readonly BlockStoreManager blockStoreManager;
+        private readonly MempoolManager mempoolManager;
+        private readonly WalletManager walletManager;
         private readonly IWatchOnlyWalletManager watchOnlyWalletManager;
+        private readonly WalletTransactionHandler walletTransactionHandler;
         private readonly ILogger logger;
         private readonly Signals signals;
         private readonly ConcurrentChain chain;
@@ -32,16 +38,20 @@ namespace Breeze.TumbleBit.Client
      
         private ClassicTumblerParameters TumblerParameters { get; set; }
 
-        public TumbleBitManager(ILoggerFactory loggerFactory, IWalletManager walletManager, IWatchOnlyWalletManager watchOnlyWalletManager, ConcurrentChain chain, Network network, Signals signals)
+        public TumbleBitManager(ILoggerFactory loggerFactory, WalletManager walletManager, IWatchOnlyWalletManager watchOnlyWalletManager, ConcurrentChain chain, Network network, Signals signals, WalletTransactionHandler walletTransactionHandler, BlockStoreManager blockStoreManager, MempoolManager mempoolManager)
         {
             this.walletManager = walletManager;
             this.watchOnlyWalletManager = watchOnlyWalletManager;
+            this.walletTransactionHandler = walletTransactionHandler;
             this.chain = chain;
             this.signals = signals;
             this.network = network;
+            this.loggerFactory = loggerFactory;
             this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
+            this.blockStoreManager = blockStoreManager;
+            this.mempoolManager = mempoolManager;
 
-            this.tumblingState = new TumblingState(loggerFactory, this.chain, this.walletManager, this.watchOnlyWalletManager, this.network);
+            this.tumblingState = new TumblingState(loggerFactory, this.chain, this.walletManager, this.watchOnlyWalletManager, this.network, this.walletTransactionHandler, this.blockStoreManager, this.mempoolManager);
         }
 
         /// <inheritdoc />
@@ -54,7 +64,7 @@ namespace Breeze.TumbleBit.Client
             // TODO: Temporary measure
             string[] args = { "-testnet" };
 
-            var config = new TumblerClientConfiguration();
+            var config = new FullNodeTumblerClientConfiguration(this.tumblingState);
             config.LoadArgs(args);
 
             // AcceptAllClientConfiguration should be used if the interaction is null

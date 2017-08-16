@@ -17,24 +17,20 @@ namespace Breeze.TumbleBit.Client.Services
     public class FullNodeBlockExplorerService : IBlockExplorerService
     {
         FullNodeWalletCache _Cache;
-        private FullNode fullNode;
-        private IWatchOnlyWalletManager watchOnlyWalletManager;
+        private TumblingState tumblingState;
 
-        public FullNodeBlockExplorerService(FullNodeWalletCache cache, IRepository repo, FullNode fullNode, IWatchOnlyWalletManager watchOnlyWalletManager)
+        public FullNodeBlockExplorerService(FullNodeWalletCache cache, IRepository repo, TumblingState tumblingState)
         {
             if (repo == null)
                 throw new ArgumentNullException("repo");
             if (cache == null)
                 throw new ArgumentNullException("cache");
-            if (fullNode == null)
-                throw new ArgumentNullException("fullNode");
-            if (watchOnlyWalletManager == null)
-                throw new ArgumentNullException("watchOnlyWalletManager");
+            if (tumblingState == null)
+                throw new ArgumentNullException("tumblingState");
 
             _Repo = repo;
             _Cache = cache;
-            this.fullNode = fullNode;
-            this.watchOnlyWalletManager = watchOnlyWalletManager;
+            this.tumblingState = tumblingState;
         }
 
         IRepository _Repo;
@@ -49,7 +45,7 @@ namespace Breeze.TumbleBit.Client.Services
             while (true)
             {
                 cancellation.ThrowIfCancellationRequested();
-                var h = this.fullNode.WalletManager.LastReceivedBlockHash();
+                var h = this.tumblingState.walletManager.WalletTipHash;
                 if (h != currentBlock)
                 {
                     _Cache.Refresh(h);
@@ -64,7 +60,7 @@ namespace Breeze.TumbleBit.Client.Services
             if (scriptPubKey == null)
                 throw new ArgumentNullException(nameof(scriptPubKey));
             
-            var address = scriptPubKey.GetDestinationAddress(this.fullNode.Network);
+            var address = scriptPubKey.GetDestinationAddress(this.tumblingState.TumblerNetwork);
             if (address == null)
                 return new TransactionInformation[0];
 
@@ -80,12 +76,15 @@ namespace Breeze.TumbleBit.Client.Services
                     MerkleBlock proof = null;
 
                     // TODO: Not efficient
-                    foreach (var wallet in this.fullNode.WalletManager.Wallets)
+
+                    foreach (var walletName in this.tumblingState.walletManager.GetWallets())
                     {
                         if (found)
                             break;
 
-                        foreach (var account in wallet.GetAccountsByCoinType((CoinType)this.fullNode.Network.Consensus.CoinType))
+                        var wallet = this.tumblingState.walletManager.GetWallet(walletName);
+
+                        foreach (var account in wallet.GetAccountsByCoinType(this.tumblingState.coinType))
                         {
                             var txData = account.GetTransactionsById(tx.Transaction.GetHash());
                             if (txData != null)
@@ -123,7 +122,7 @@ namespace Breeze.TumbleBit.Client.Services
             List<uint256> txIdList = new List<uint256>();
 
             // First examine watch-only wallet
-            var watchOnlyWallet = this.watchOnlyWalletManager.GetWallet();
+            var watchOnlyWallet = this.tumblingState.watchOnlyWalletManager.GetWallet();
 
             // TODO: This seems highly inefficient, maybe we need a cache or quicker lookup mechanism
             foreach (var watchOnlyTx in watchOnlyWallet.Transactions)
@@ -144,11 +143,12 @@ namespace Breeze.TumbleBit.Client.Services
 
             // Search transactions in regular wallet for matching address criteria
 
-            foreach (var wallet in this.fullNode.WalletManager.Wallets)
+            foreach (var walletName in this.tumblingState.walletManager.GetWallets())
             {
-                foreach (var walletTx in wallet.GetAllTransactionsByCoinType((CoinType)this.fullNode.Network.Consensus.CoinType))
+                var wallet = this.tumblingState.walletManager.GetWallet(walletName);
+                foreach (var walletTx in wallet.GetAllTransactionsByCoinType(this.tumblingState.coinType))
                 {
-                    if (address == walletTx.ScriptPubKey.GetDestinationAddress(this.fullNode.Network))
+                    if (address == walletTx.ScriptPubKey.GetDestinationAddress(this.tumblingState.TumblerNetwork))
                     {
                         txIdList.Add(walletTx.Id);
                     }
@@ -210,16 +210,16 @@ namespace Breeze.TumbleBit.Client.Services
         {
             try
             {
-                Transaction trx = this.fullNode.MempoolManager?.InfoAsync(txId)?.Result.Trx;
+                Transaction trx = this.tumblingState.mempoolManager.InfoAsync(txId)?.Result.Trx;
 
                 if (trx == null)
-                    trx = this.fullNode.BlockStoreManager?.BlockRepository?.GetTrxAsync(txId).Result;
-
+                    trx = this.tumblingState.blockStoreManager.BlockRepository?.GetTrxAsync(txId).Result;
+                
                 // Need number of confirmations as well
-                var blockHash = this.fullNode.BlockStoreManager?.BlockRepository?.GetTrxBlockIdAsync(txId).Result;
-                var block = this.fullNode.Chain.GetBlock(blockHash);
+                var blockHash = this.tumblingState.blockStoreManager.BlockRepository?.GetTrxBlockIdAsync(txId).Result;
+                var block = this.tumblingState.chain.GetBlock(blockHash);
                 var blockHeight = block.Height;
-                var tipHeight = this.fullNode.Chain.Tip.Height;
+                var tipHeight = this.tumblingState.chain.Tip.Height;
                 var confirmations = tipHeight - blockHeight;
                 var confCount = Math.Max(0, confirmations);
 
@@ -235,13 +235,13 @@ namespace Breeze.TumbleBit.Client.Services
 
         public void Track(Script scriptPubkey)
         {
-            this.watchOnlyWalletManager.Watch(scriptPubkey);
+            this.tumblingState.watchOnlyWalletManager.Watch(scriptPubkey);
         }
 
         public int GetBlockConfirmations(uint256 blockId)
         {
-            var block = this.fullNode.Chain.GetBlock(blockId);
-            var tipHeight = this.fullNode.Chain.Tip.Height;
+            var block = this.tumblingState.chain.GetBlock(blockId);
+            var tipHeight = this.tumblingState.chain.Tip.Height;
             var confirmations = tipHeight - block.Height;
             var confCount = Math.Max(0, confirmations);
 
@@ -250,11 +250,11 @@ namespace Breeze.TumbleBit.Client.Services
 
         public bool TrackPrunedTransaction(Transaction transaction, MerkleBlock merkleProof)
         {
-            var blockHash = this.fullNode.BlockStoreManager?.BlockRepository?.GetTrxBlockIdAsync(transaction.GetHash()).Result;
-            var chainBlock = this.fullNode.Chain.GetBlock(blockHash);
-            var block = this.fullNode.BlockStoreManager?.BlockRepository?.GetAsync(blockHash).Result;
+            var blockHash = this.tumblingState.blockStoreManager.BlockRepository?.GetTrxBlockIdAsync(transaction.GetHash()).Result;
+            var chainBlock = this.tumblingState.chain.GetBlock(blockHash);
+            var block = this.tumblingState.blockStoreManager.BlockRepository?.GetAsync(blockHash).Result;
 
-            this.fullNode.WalletManager.ProcessTransaction(transaction, chainBlock.Height, block);
+            this.tumblingState.walletManager.ProcessTransaction(transaction, chainBlock.Height, block);
 
             _Cache.ImportTransaction(transaction, GetBlockConfirmations(merkleProof.Header.GetHash()));
 

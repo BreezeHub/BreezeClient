@@ -16,25 +16,25 @@ namespace Breeze.TumbleBit.Client.Services
 {
     public class FullNodeWalletService : IWalletService
     {
-        private FullNode fullNode;
+        private TumblingState tumblingState;
         private string walletName;
         private string accountName;
 
-        public FullNodeWalletService(FullNode fullNode, string walletName, string accountName)
+        public FullNodeWalletService(TumblingState tumblingState, string walletName, string accountName)
         {
-            this.fullNode = fullNode;
+            this.tumblingState = tumblingState;
             this.walletName = walletName;
             this.accountName = accountName;
         }
 
         public IDestination GenerateAddress()
         {
-            Wallet wallet = this.fullNode.WalletManager.GetWallet(walletName);
+            Wallet wallet = this.tumblingState.walletManager.GetWallet(walletName);
 
             HdAddress hdAddress = null;
             BitcoinAddress address = null;
 
-            foreach (var account in wallet.GetAccountsByCoinType((CoinType)this.fullNode.Network.Consensus.CoinType))
+            foreach (var account in wallet.GetAccountsByCoinType(this.tumblingState.coinType))
             {
                 // Iterate through accounts until unused address is found
                 hdAddress = account.GetFirstUnusedReceivingAddress();
@@ -75,7 +75,7 @@ namespace Breeze.TumbleBit.Client.Services
             txBuildContext.Sign = true;
 
             // FundTransaction modifies tx directly
-            this.fullNode.WalletTransactionHandler.FundTransaction(txBuildContext, tx);
+            this.tumblingState.walletTransactionHandler.FundTransaction(txBuildContext, tx);
 
             return tx;
         }

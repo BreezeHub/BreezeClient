@@ -43,6 +43,7 @@ namespace Breeze.TumbleBit.Client.CLI
 			//Start the engines!
 			NodeSettings nodeSettings = NodeSettings.FromArguments(args2);
 			FullNode fullNode = StartupFullNode(nodeSettings, tumblerUri);
+
             fullNode.Run();
 
             // Not needed at all, invoke tumbler connection via the API

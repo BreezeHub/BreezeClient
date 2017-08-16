@@ -33,20 +33,17 @@ namespace Breeze.TumbleBit.Client.Services
     public class FullNodeWalletCache
     {
         private readonly IRepository _Repo;
-        private FullNode fullNode;
-        private IWatchOnlyWalletManager watchOnlyWalletManager;
-        public FullNodeWalletCache(IRepository repository, FullNode fullNode, IWatchOnlyWalletManager watchOnlyWalletManager)
+        private TumblingState tumblingState;
+
+        public FullNodeWalletCache(IRepository repository, TumblingState tumblingState)
         {
             if(repository == null)
                 throw new ArgumentNullException("repository");
-            if (fullNode == null)
-                throw new ArgumentNullException("fullNode");
-            if (watchOnlyWalletManager == null)
-                throw new ArgumentNullException("watchOnlyWalletManager");
+            if (tumblingState == null)
+                throw new ArgumentNullException("tumblingState");
 
             _Repo = repository;
-            this.fullNode = fullNode;
-            this.watchOnlyWalletManager = watchOnlyWalletManager;
+            this.tumblingState = tumblingState;
         }
 
         volatile uint256 _RefreshedAtBlock;
@@ -83,7 +80,7 @@ namespace Breeze.TumbleBit.Client.Services
 
         private void RefreshBlockCount()
         {
-            Interlocked.Exchange(ref _BlockCount, this.fullNode.WalletManager.LastBlockHeight());
+                Interlocked.Exchange(ref _BlockCount, this.tumblingState.walletManager.LastBlockHeight());
         }
 
         public Transaction GetTransaction(uint256 txId)
@@ -104,10 +101,10 @@ namespace Breeze.TumbleBit.Client.Services
         {
             try
             {
-                Transaction trx = this.fullNode.MempoolManager?.InfoAsync(txId)?.Result.Trx;
+                Transaction trx = this.tumblingState.mempoolManager.InfoAsync(txId)?.Result.Trx;
 
                 if (trx == null)
-                    trx = this.fullNode.BlockStoreManager?.BlockRepository?.GetTrxAsync(txId).Result;
+                    trx = this.tumblingState.blockStoreManager.BlockRepository?.GetTrxAsync(txId).Result;
 
                 return trx;
             }
@@ -160,7 +157,7 @@ namespace Breeze.TumbleBit.Client.Services
             List<uint256> txIdList = new List<uint256>();
 
             // First examine watch-only wallet
-            var watchOnlyWallet = this.watchOnlyWalletManager.GetWallet();
+            var watchOnlyWallet = this.tumblingState.watchOnlyWalletManager.GetWallet();
 
             foreach (var watchOnlyTx in watchOnlyWallet.Transactions)
             {
@@ -168,9 +165,9 @@ namespace Breeze.TumbleBit.Client.Services
             }
 
             // List transactions in regular wallet
-            foreach (var wallet in this.fullNode.WalletManager.Wallets)
+            foreach (var wallet in this.tumblingState.walletManager.Wallets)
             {
-                foreach (var walletTx in wallet.GetAllTransactionsByCoinType((CoinType)this.fullNode.Network.Consensus.CoinType))
+                foreach (var walletTx in wallet.GetAllTransactionsByCoinType(this.tumblingState.coinType))
                 {
                     txIdList.Add(walletTx.Id);
                 }
@@ -178,10 +175,10 @@ namespace Breeze.TumbleBit.Client.Services
 
             foreach(var txId in txIdList)
             {
-                var blockHash = this.fullNode.BlockStoreManager?.BlockRepository?.GetTrxBlockIdAsync(txId).Result;
-                var block = this.fullNode.Chain.GetBlock(blockHash);
+                var blockHash = this.tumblingState.blockStoreManager.BlockRepository?.GetTrxBlockIdAsync(txId).Result;
+                var block = this.tumblingState.chain.GetBlock(blockHash);
                 var blockHeight = block.Height;
-                var tipHeight = this.fullNode.Chain.Tip.Height;
+                var tipHeight = this.tumblingState.chain.Tip.Height;
                 var confirmations = tipHeight - blockHeight;
                 var confCount = Math.Max(0, confirmations);
 

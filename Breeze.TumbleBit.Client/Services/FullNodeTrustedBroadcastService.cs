@@ -62,12 +62,12 @@ namespace Breeze.TumbleBit.Client.Services
             }
         }
 
-        private FullNode fullNode;
+        private TumblingState tumblingState;
         private Tracker _Tracker;
         private IBroadcastService _Broadcaster;
         private IWatchOnlyWalletManager watchOnlyWalletManager;
 
-        public FullNodeTrustedBroadcastService(IBroadcastService innerBroadcast, IBlockExplorerService explorer, IRepository repository, FullNodeWalletCache cache, Tracker tracker, FullNode fullNode, IWatchOnlyWalletManager watchOnlyWalletManager)
+        public FullNodeTrustedBroadcastService(IBroadcastService innerBroadcast, IBlockExplorerService explorer, IRepository repository, FullNodeWalletCache cache, Tracker tracker, TumblingState tumblingState)
         {
             if (innerBroadcast == null)
                 throw new ArgumentNullException(nameof(innerBroadcast));
@@ -79,10 +79,8 @@ namespace Breeze.TumbleBit.Client.Services
                 throw new ArgumentNullException(nameof(tracker));
             if (cache == null)
                 throw new ArgumentNullException(nameof(cache));
-            if (fullNode == null)
-                throw new ArgumentNullException(nameof(fullNode));
-            if (watchOnlyWalletManager == null)
-                throw new ArgumentNullException(nameof(watchOnlyWalletManager));
+            if (tumblingState == null)
+                throw new ArgumentNullException(nameof(tumblingState));
 
             _Repository = repository;
             _Broadcaster = innerBroadcast;
@@ -90,8 +88,7 @@ namespace Breeze.TumbleBit.Client.Services
             _BlockExplorer = explorer;
             _Tracker = tracker;
             _Cache = cache;
-            this.fullNode = fullNode;
-            this.watchOnlyWalletManager = watchOnlyWalletManager;
+            this.tumblingState = tumblingState;
         }
 
         public bool TrackPreviousScriptPubKey
@@ -106,7 +103,7 @@ namespace Breeze.TumbleBit.Client.Services
             if (broadcast.Key != null && !broadcast.Transaction.Inputs.Any(i => i.PrevOut.IsNull))
                 throw new InvalidOperationException("One of the input should be null");
 
-            var address = broadcast.PreviousScriptPubKey?.GetDestinationAddress(this.fullNode.Network);
+            var address = broadcast.PreviousScriptPubKey?.GetDestinationAddress(this.tumblingState.TumblerNetwork);
             if (address != null && TrackPreviousScriptPubKey)
                 this.watchOnlyWalletManager.Watch(address.ScriptPubKey);
             
@@ -114,7 +111,7 @@ namespace Breeze.TumbleBit.Client.Services
             var record = new Record();
             //3 days expiration after now or broadcast date
             var expirationBase = Math.Max(height, broadcast.BroadcastableHeight);
-            record.Expiration = expirationBase + (int)(TimeSpan.FromDays(3).Ticks / this.fullNode.Network.Consensus.PowTargetSpacing.Ticks);
+            record.Expiration = expirationBase + (int)(TimeSpan.FromDays(3).Ticks / this.tumblingState.TumblerNetwork.Consensus.PowTargetSpacing.Ticks);
 
             record.Request = broadcast;
             record.TransactionType = transactionType;
