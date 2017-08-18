@@ -25,7 +25,8 @@ namespace Breeze.TumbleBit.Client
         private readonly BlockStoreManager blockStoreManager;
         private readonly MempoolManager mempoolManager;
         private readonly WalletManager walletManager;
-        private readonly IWatchOnlyWalletManager watchOnlyWalletManager;
+        private readonly WatchOnlyWalletManager watchOnlyWalletManager;
+        private readonly WalletSyncManager walletSyncManager;
         private readonly WalletTransactionHandler walletTransactionHandler;
         private readonly ILogger logger;
         private readonly Signals signals;
@@ -38,10 +39,11 @@ namespace Breeze.TumbleBit.Client
      
         private ClassicTumblerParameters TumblerParameters { get; set; }
 
-        public TumbleBitManager(ILoggerFactory loggerFactory, WalletManager walletManager, IWatchOnlyWalletManager watchOnlyWalletManager, ConcurrentChain chain, Network network, Signals signals, WalletTransactionHandler walletTransactionHandler, BlockStoreManager blockStoreManager, MempoolManager mempoolManager)
+        public TumbleBitManager(ILoggerFactory loggerFactory, WalletManager walletManager, WatchOnlyWalletManager watchOnlyWalletManager, ConcurrentChain chain, Network network, Signals signals, WalletTransactionHandler walletTransactionHandler, BlockStoreManager blockStoreManager, MempoolManager mempoolManager, WalletSyncManager walletSyncManager)
         {
             this.walletManager = walletManager;
             this.watchOnlyWalletManager = watchOnlyWalletManager;
+            this.walletSyncManager = walletSyncManager;
             this.walletTransactionHandler = walletTransactionHandler;
             this.chain = chain;
             this.signals = signals;
@@ -51,7 +53,7 @@ namespace Breeze.TumbleBit.Client
             this.blockStoreManager = blockStoreManager;
             this.mempoolManager = mempoolManager;
 
-            this.tumblingState = new TumblingState(loggerFactory, this.chain, this.walletManager, this.watchOnlyWalletManager, this.network, this.walletTransactionHandler, this.blockStoreManager, this.mempoolManager);
+            this.tumblingState = new TumblingState(loggerFactory, this.chain, this.walletManager, this.watchOnlyWalletManager, this.network, this.walletTransactionHandler, this.blockStoreManager, this.mempoolManager, this.walletSyncManager);
         }
 
         /// <inheritdoc />
@@ -128,7 +130,8 @@ namespace Breeze.TumbleBit.Client
             this.tumblingState.Save();
 
             // Subscribe to receive new block notifications
-            this.blockReceiver = this.signals.Blocks.Subscribe(new BlockObserver(this.chain, this));
+            // TODO: Is this the right BlockObserver or should the one used by the Wallet feature be used?
+            this.blockReceiver = this.signals.SubscribeForBlocks(new BlockObserver(this.chain, this));
 
             this.stateMachine = new StateMachinesExecutor(this.runtime);
             this.stateMachine.Start();

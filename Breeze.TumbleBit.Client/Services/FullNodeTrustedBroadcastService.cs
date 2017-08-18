@@ -65,7 +65,6 @@ namespace Breeze.TumbleBit.Client.Services
         private TumblingState tumblingState;
         private Tracker _Tracker;
         private IBroadcastService _Broadcaster;
-        private IWatchOnlyWalletManager watchOnlyWalletManager;
 
         public FullNodeTrustedBroadcastService(IBroadcastService innerBroadcast, IBlockExplorerService explorer, IRepository repository, FullNodeWalletCache cache, Tracker tracker, TumblingState tumblingState)
         {
@@ -105,7 +104,7 @@ namespace Breeze.TumbleBit.Client.Services
 
             var address = broadcast.PreviousScriptPubKey?.GetDestinationAddress(this.tumblingState.TumblerNetwork);
             if (address != null && TrackPreviousScriptPubKey)
-                this.watchOnlyWalletManager.Watch(address.ScriptPubKey);
+                this.tumblingState.watchOnlyWalletManager.WatchAddress(address.ScriptPubKey.GetDestinationAddress(this.tumblingState.TumblerNetwork).ToString());
             
             var height = _Cache.BlockCount;
             var record = new Record();

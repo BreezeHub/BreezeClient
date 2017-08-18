@@ -157,11 +157,14 @@ namespace Breeze.TumbleBit.Client.Services
             List<uint256> txIdList = new List<uint256>();
 
             // First examine watch-only wallet
-            var watchOnlyWallet = this.tumblingState.watchOnlyWalletManager.GetWallet();
+            var watchOnlyWallet = this.tumblingState.watchOnlyWalletManager.GetWatchOnlyWallet();
 
-            foreach (var watchOnlyTx in watchOnlyWallet.Transactions)
+            foreach (var watchedAddress in watchOnlyWallet.WatchedAddresses)
             {
-                txIdList.Add(new uint256(watchOnlyTx.txid));
+                foreach (var watchOnlyTx in watchedAddress.Value.Transactions)
+            {
+                    txIdList.Add(watchOnlyTx.Value.Transaction.GetHash());
+                }
             }
 
             // List transactions in regular wallet

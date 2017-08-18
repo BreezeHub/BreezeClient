@@ -23,7 +23,8 @@ namespace Breeze.TumbleBit.Client
         public ILogger logger;
         public ConcurrentChain chain;
         public WalletManager walletManager;
-        public IWatchOnlyWalletManager watchOnlyWalletManager;
+        public WalletSyncManager walletSyncManager;
+        public WatchOnlyWalletManager watchOnlyWalletManager;
         public WalletTransactionHandler walletTransactionHandler;
         public BlockStoreManager blockStoreManager;
         public MempoolManager mempoolManager;
@@ -64,11 +65,12 @@ namespace Breeze.TumbleBit.Client
         public TumblingState(ILoggerFactory loggerFactory, 
             ConcurrentChain chain,
             WalletManager walletManager,
-            IWatchOnlyWalletManager  watchOnlyWalletManager,
+            WatchOnlyWalletManager  watchOnlyWalletManager,
             Network network, 
             WalletTransactionHandler walletTransactionHandler,
             BlockStoreManager blockStoreManager,
-            MempoolManager mempoolManager)
+            MempoolManager mempoolManager,
+            WalletSyncManager walletSyncManager)
         {
             this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
             this.chain = chain;
@@ -78,6 +80,7 @@ namespace Breeze.TumbleBit.Client
             this.walletTransactionHandler = walletTransactionHandler;
             this.blockStoreManager = blockStoreManager;
             this.mempoolManager = mempoolManager;
+            this.walletSyncManager = walletSyncManager;
         }
 
         /// <inheritdoc />

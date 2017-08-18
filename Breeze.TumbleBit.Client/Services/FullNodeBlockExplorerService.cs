@@ -92,7 +92,7 @@ namespace Breeze.TumbleBit.Client.Services
                                 found = true;
 
                                 // TODO: Is it possible for GetTransactionsById to return multiple results?
-                                var trx = txData.First<TransactionData>();
+                                var trx = txData.First<Stratis.Bitcoin.Features.Wallet.TransactionData>();
 
                                 proof = new MerkleBlock();
                                 proof.ReadWrite(Encoders.Hex.DecodeData(trx.MerkleProof.ToHex()));
@@ -122,20 +122,25 @@ namespace Breeze.TumbleBit.Client.Services
             List<uint256> txIdList = new List<uint256>();
 
             // First examine watch-only wallet
-            var watchOnlyWallet = this.tumblingState.watchOnlyWalletManager.GetWallet();
+            var watchOnlyWallet = this.tumblingState.watchOnlyWalletManager.GetWatchOnlyWallet();
 
             // TODO: This seems highly inefficient, maybe we need a cache or quicker lookup mechanism
-            foreach (var watchOnlyTx in watchOnlyWallet.Transactions)
+            foreach (var watchedAddressKeyValue in watchOnlyWallet.WatchedAddresses)
             {
-                // Looking for funds received by address only, so only examine transaction outputs
-                foreach (var vout in watchOnlyTx.vout)
+                if (watchedAddressKeyValue.Value.Script != address.ScriptPubKey)
+                    continue;
+
+                var watchedAddress = watchedAddressKeyValue.Value;
+
+                foreach (var watchOnlyTx in watchedAddress.Transactions)
                 {
-                    // Look at each of the addresses contained in the scriptPubKey to see if they match
-                    foreach (var addr in vout.scriptPubKey.addresses)
+                    // Looking for funds received by address only, so only examine transaction outputs
+                    foreach (var vout in watchOnlyTx.Value.Transaction.Outputs)
                     {
-                        if (address.ToString() == addr)
+                        // Look at each of the addresses contained in the scriptPubKey to see if they match
+                        if (address == vout.ScriptPubKey.GetDestinationAddress(this.tumblingState.TumblerNetwork))
                         {
-                            txIdList.Add(new uint256(watchOnlyTx.txid));
+                             txIdList.Add(watchOnlyTx.Value.Transaction.GetHash());
                         }
                     }
                 }
@@ -235,7 +240,7 @@ namespace Breeze.TumbleBit.Client.Services
 
         public void Track(Script scriptPubkey)
         {
-            this.tumblingState.watchOnlyWalletManager.Watch(scriptPubkey);
+            this.tumblingState.watchOnlyWalletManager.WatchAddress(scriptPubkey.GetDestinationAddress(this.tumblingState.TumblerNetwork).ToString());
         }
 
         public int GetBlockConfirmations(uint256 blockId)
